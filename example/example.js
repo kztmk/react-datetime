@@ -12,3 +12,7 @@ ReactDOM.render(
   }),
   document.getElementById('datetime')
 );
+ReactDOM.render(
+  React.createElement(DateTime, { timeFormat: true, direction: 'up'}),
+  document.getElementById('datetime--footer')
+);

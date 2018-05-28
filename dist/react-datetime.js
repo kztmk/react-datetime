@@ -12,7 +12,7 @@ MIT: https://github.com/YouCanBookMe/react-datetime/raw/master/LICENSE
 		exports["Datetime"] = factory(require("React"), require("moment"), require("ReactDOM"));
 	else
 		root["Datetime"] = factory(root["React"], root["moment"], root["ReactDOM"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_13__, __WEBPACK_EXTERNAL_MODULE_17__, __WEBPACK_EXTERNAL_MODULE_21__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_13__, __WEBPACK_EXTERNAL_MODULE_17__, __WEBPACK_EXTERNAL_MODULE_18__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -66,7 +66,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		createClass = __webpack_require__(12),
 		moment = __webpack_require__(17),
 		React = __webpack_require__(13),
-		CalendarContainer = __webpack_require__(18)
+		ReactDOM = __webpack_require__(18),
+		CalendarContainer = __webpack_require__(19)
 		;
 
 	var viewModes = Object.freeze({
@@ -78,6 +79,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var TYPES = PropTypes;
 	var Datetime = createClass({
+		displayName: 'DateTime',
 		propTypes: {
 			// value: TYPES.object | TYPES.string,
 			// defaultValue: TYPES.object | TYPES.string,
@@ -86,6 +88,8 @@ return /******/ (function(modules) { // webpackBootstrap
 			onBlur: TYPES.func,
 			onChange: TYPES.func,
 			onViewModeChange: TYPES.func,
+			onNavigateBack: TYPES.func,
+			onNavigateForward: TYPES.func,
 			locale: TYPES.string,
 			utc: TYPES.bool,
 			input: TYPES.bool,
@@ -98,7 +102,8 @@ return /******/ (function(modules) { // webpackBootstrap
 			open: TYPES.bool,
 			strictParsing: TYPES.bool,
 			closeOnSelect: TYPES.bool,
-			closeOnTab: TYPES.bool
+			closeOnTab: TYPES.bool,
+			direction: TYPES.oneOf(['down', 'up'])
 		},
 
 		getInitialState: function() {
@@ -314,26 +319,29 @@ return /******/ (function(modules) { // webpackBootstrap
 			};
 		},
 
-		addTime: function( amount, type, toSelected ) {
-			return this.updateTime( 'add', amount, type, toSelected );
+		subtractTime: function( amount, type, toSelected ) {
+			var me = this;
+			return function() {
+				me.props.onNavigateBack( amount, type );
+				me.updateTime( 'subtract', amount, type, toSelected );
+			};
 		},
 
-		subtractTime: function( amount, type, toSelected ) {
-			return this.updateTime( 'subtract', amount, type, toSelected );
+		addTime: function( amount, type, toSelected ) {
+			var me = this;
+			return function() {
+				me.props.onNavigateForward( amount, type );
+				me.updateTime( 'add', amount, type, toSelected );
+			};
 		},
 
 		updateTime: function( op, amount, type, toSelected ) {
-			var me = this;
+			var update = {},
+				date = toSelected ? 'selectedDate' : 'viewDate';
 
-			return function() {
-				var update = {},
-					date = toSelected ? 'selectedDate' : 'viewDate'
-				;
+			update[ date ] = this.state[ date ].clone()[ op ]( amount, type );
 
-				update[ date ] = me.state[ date ].clone()[ op ]( amount, type );
-
-				me.setState( update );
-			};
+			this.setState( update );
 		},
 
 		allowedSetTime: ['hours', 'minutes', 'seconds', 'milliseconds'],
@@ -447,7 +455,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		},
 
 		componentProps: {
-			fromProps: ['value', 'isValidDate', 'renderDay', 'renderMonth', 'renderYear', 'timeConstraints'],
+			fromProps: ['value', 'isValidDate', 'renderDay', 'renderMonth', 'renderYear', 'timeConstraints', 'direction'],
 			fromState: ['viewDate', 'selectedDate', 'updateOn'],
 			fromThis: ['setDate', 'setTime', 'showView', 'addTime', 'subtractTime', 'updateSelectedDate', 'localMoment', 'handleClickOutside']
 		},
@@ -469,6 +477,22 @@ return /******/ (function(modules) { // webpackBootstrap
 			});
 
 			return props;
+		},
+
+		componentDidUpdate: function(){
+			this.updatePickerPosition();
+		},
+
+		componentDidMount: function() {
+			this.updatePickerPosition();
+		},
+
+		updatePickerPosition: function() {
+			if(this.state.open && this.props.direction === 'up') {
+				var parent = ReactDOM.findDOMNode(this);
+				var picker = parent.querySelector('.rdtPicker');
+				picker.style.top = '-' + picker.offsetHeight + 'px';
+			}
 		},
 
 		render: function() {
@@ -519,13 +543,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		onBlur: function() {},
 		onChange: function() {},
 		onViewModeChange: function() {},
+		onNavigateBack: function() {},
+		onNavigateForward: function() {},
 		timeFormat: true,
 		timeConstraints: {},
 		dateFormat: true,
 		strictParsing: true,
 		closeOnSelect: false,
 		closeOnTab: true,
-		utc: false
+		utc: false,
+		direction: 'down'
 	};
 
 	// Make moment accessible through the Datetime class
@@ -2865,13 +2892,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 18 */
+/***/ (function(module, exports) {
+
+	module.exports = __WEBPACK_EXTERNAL_MODULE_18__;
+
+/***/ }),
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	var React = __webpack_require__(13),
 		createClass = __webpack_require__(12),
-		DaysView = __webpack_require__(19),
+		DaysView = __webpack_require__(20),
 		MonthsView = __webpack_require__(22),
 		YearsView = __webpack_require__(23),
 		TimeView = __webpack_require__(24)
@@ -2894,7 +2927,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2902,7 +2935,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var React = __webpack_require__(13),
 		createClass = __webpack_require__(12),
 		moment = __webpack_require__(17),
-		onClickOutside = __webpack_require__(20).default
+		onClickOutside = __webpack_require__(21).default
 		;
 
 	var DateTimePickerDays = onClickOutside( createClass({
@@ -3044,7 +3077,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3052,7 +3085,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, '__esModule', { value: true });
 
 	var react = __webpack_require__(13);
-	var reactDom = __webpack_require__(21);
+	var reactDom = __webpack_require__(18);
 
 	function _inheritsLoose(subClass, superClass) {
 	  subClass.prototype = Object.create(superClass.prototype);
@@ -3401,12 +3434,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 21 */
-/***/ (function(module, exports) {
-
-	module.exports = __WEBPACK_EXTERNAL_MODULE_21__;
-
-/***/ }),
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -3414,7 +3441,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var React = __webpack_require__(13),
 		createClass = __webpack_require__(12),
-		onClickOutside = __webpack_require__(20).default
+		onClickOutside = __webpack_require__(21).default
 		;
 
 	var DateTimePickerMonths = onClickOutside( createClass({
@@ -3527,7 +3554,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var React = __webpack_require__(13),
 		createClass = __webpack_require__(12),
-		onClickOutside = __webpack_require__(20).default
+		onClickOutside = __webpack_require__(21).default
 		;
 
 	var DateTimePickerYears = onClickOutside( createClass({
@@ -3639,7 +3666,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var React = __webpack_require__(13),
 		createClass = __webpack_require__(12),
 		assign = __webpack_require__(1),
-		onClickOutside = __webpack_require__(20).default
+		onClickOutside = __webpack_require__(21).default
 		;
 
 	var DateTimePickerTime = onClickOutside( createClass({
