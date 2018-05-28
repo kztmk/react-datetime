@@ -418,7 +418,7 @@ var Datetime = createClass({
 		return props;
 	},
 
-	componentDidUpdate: function(){
+	componentDidUpdate: function() {
 		this.updatePickerPosition();
 	},
 
@@ -427,7 +427,7 @@ var Datetime = createClass({
 	},
 
 	updatePickerPosition: function() {
-		if(this.state.open && this.props.direction === 'up') {
+		if (this.state.open && this.props.direction === 'up') {
 			var parent = ReactDOM.findDOMNode(this);
 			var picker = parent.querySelector('.rdtPicker');
 			picker.style.top = '-' + picker.offsetHeight + 'px';
